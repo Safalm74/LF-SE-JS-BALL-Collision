@@ -34,11 +34,11 @@
 document.body.style.backgroundImage="linear-gradient(172.33deg, #30303A -1.75%, #20202E 83.53%, #050519 104.9%)"
 
 // Variables
-
+let ballInitialized=false;
 const boundry_min_x = 0;
 const boundry_min_y = 0;
 let boundry_max_x = Math.floor(window.innerWidth * 0.8);
-let boundry_max_y = Math.floor(window.innerHeight*0.9);
+let boundry_max_y = Math.floor(window.innerHeight*0.8);
 
 const canvas = document.getElementById('canvas');
 
@@ -53,7 +53,6 @@ console.log('Canvas initialized');
 
 const ctx = canvas.getContext('2d');
 
-console.log(boundry_max_x,boundry_max_y);
 
 const max_velocity = 10;
 const min_velocity = -10;
@@ -65,17 +64,7 @@ const max_size = 20;
 const ballArray = [];
 
 //alert to get ball count
-let ball_count;
-ball_count= window.prompt('Enter Number of balls(n<2000)');
-try {
-    ball_count = Number(ball_count);
-    if (!ball_count) throw "Nan";
-    console.log(`Initiating Ball count from prompt: ${ball_count}`);
-}
-catch (e) {
-    ball_count = 50;
-    console.log(`Initiating Default Ball count: ${ball_count}`);
-}
+let ball_count=50;
 
 class Ball {
     constructor(
@@ -225,13 +214,50 @@ class Ball {
     }
 }
 
-//Message
+//Div wapper
+
+const divWrapper = document.createElement('div');
+divWrapper.style.display="flex";
+divWrapper.style.justifyContent="space-between";
+divWrapper.style.flexDirection="column";
+document.body.appendChild(divWrapper);
+
+//Message2
+const msg2 = document.createElement('p');
+msg2.innerHTML = "Enter Number of Balls: (Press Enter to take effect)";
+msg2.style.fontWeight = 900;
+msg2.style.color="#FFF";
+msg2.style.fontSize = "1rem";
+divWrapper.appendChild(msg2);
+//input
+const inputSpace = document.createElement('input');
+inputSpace.type="number";
+inputSpace.value=ball_count;
+inputSpace.style.fontWeight = 900;
+inputSpace.style.color="#51f";
+inputSpace.style.fontSize = "1rem";
+inputSpace.style.marginBottom="2rem"
+inputSpace.addEventListener('keypress',
+    (e)=>{
+        if (e.key === 'Enter' && inputSpace.value){
+            ball_count=inputSpace.value
+            initializeBall()
+
+        }
+    }
+
+);
+divWrapper.appendChild(inputSpace);
+
+//Message1
 const msg = document.createElement('p');
 msg.innerHTML = "Ball Collision using Canvas";
 msg.style.fontWeight = 900;
 msg.style.color="#FFF";
-msg.style.fontSize = "3rem";
-document.body.appendChild(msg);
+msg.style.fontSize = "1.5rem";
+msg.style.padding='.8rem';
+msg.style.border='1px dashed #fff'
+divWrapper.appendChild(msg);
 
 
 //Creating ball
@@ -275,6 +301,7 @@ function nooverlap(ballArray) {
 
 //Initiallizing balls
 function initializeBall() {
+    ballInitialized=false;
     ballArray.length = 0;
     for (let i = 0; i < ball_count; i++) {
         const xyr_holder = nooverlap(ballArray);
@@ -295,13 +322,16 @@ function initializeBall() {
         }
 
     }
+    ballInitialized=true;
+
     console.log('Balls Initialized')
 }
 initializeBall();
 
 function mainloop() {
+   if (ballInitialized) {
     boundry_max_x = Math.floor(window.innerWidth * 0.8);
-    boundry_max_y = Math.floor(window.innerHeight*0.9);
+    boundry_max_y = Math.floor(window.innerHeight*0.8);
     canvas.width = boundry_max_x;
     canvas.height = boundry_max_y;
 
@@ -317,7 +347,8 @@ function mainloop() {
     ballArray[ballArray.length - 1].moveBall();
     ballArray[ballArray.length - 1].drawBall();
 
-   requestAnimationFrame(mainloop);
+   };
+   requestAnimationFrame(mainloop)
 }
 
 mainloop();
