@@ -31,23 +31,13 @@
 
 */
 
-document.body.style.backgroundImage="linear-gradient(172.33deg, #30303A -1.75%, #20202E 83.53%, #050519 104.9%)"
 
-// Variables
-let ballInitialized=false;
-const boundry_min_x = 0;
-const boundry_min_y = 0;
-let boundry_max_x = Math.floor(window.innerWidth * 0.8);
-let boundry_max_y = Math.floor(window.innerHeight*0.8);
-
-const canvas = document.getElementById('canvas');
 
 canvas.width = boundry_max_x;
 canvas.height = boundry_max_y;
 canvas.style.border = `.1rem solid #22f`;
 canvas.style.margin = '1rem auto';
 canvas.style.backgroundColor="#FFF"
-
 console.log('Canvas initialized');
 
 
@@ -65,170 +55,6 @@ const ballArray = [];
 
 //alert to get ball count
 let ball_count=50;
-
-class Ball {
-    constructor(
-        x = 0,
-        y = 0,
-        velocity = [2, 2], //xi,yj
-        r = 10,
-        color = 'red') {
-        this.x = x;
-        this.y = y;
-        this.r = r; //radius
-        this.w = r*10; //weight=radius*10
-        this.color = color;
-        this.velocity = velocity;
-    }
-    drawBall() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-    }
-    moveBall() {
-        this.x += this.velocity[0]; //Update in x direction
-        this.y += this.velocity[1]; //Update in y direction
-
-    }
-
-    magnitudeOfVector(x, y) {
-        return Math.sqrt(x * x + y * y);
-    }
-
-    unitVector(vectorBall) {
-        const [dx, dy] = [this.x - vectorBall.x, this.y - vectorBall.y];
-        const magnitude = this.magnitudeOfVector(dx, dy);
-        return [dx / magnitude, dy / magnitude];
-    }
-    collisionBoundry() {
-        if (this.x - this.r <= boundry_min_x || (this.x + this.r) >= boundry_max_x) {
-            this.velocity[0] *= -1;
-            //for ball moving outside x axis
-            if (this.x - this.r <= boundry_min_x) this.x = this.r;
-            if ((this.x + this.r) >= boundry_max_x) this.x = boundry_max_x - this.r;
-        }
-        if (this.y - this.r <= boundry_min_y || (this.y + this.r) >= boundry_max_y) {
-            this.velocity[1] *= -1;
-
-            //for ball moving outside y axis
-            if (this.y - this.r <= boundry_min_y) this.y = this.r;
-            if ((this.y + this.r) >= boundry_max_y) this.y = boundry_max_y - this.r;
-        }
-    }
-    collisionBall(sibbling_balls) {
-        const cal_a = (ma, mb) => (ma - mb) / (ma + mb);
-        const cal_b = (ma, mb) => (2 * mb) / (ma + mb);
-        sibbling_balls.forEach(
-            (sibbling_ball) => {
-                //calculating distance
-                const x_diff = sibbling_ball.x - this.x;
-                const y_diff = sibbling_ball.y - this.y;
-                const distance_btn = Math.sqrt(x_diff * x_diff + y_diff * y_diff);
-                if (distance_btn <= (this.r + sibbling_ball.r)) { //collision detection
-                    /*
-    
-                    Elastic Collision:
-                    
-                    Theory:
-                    1. calculating unit normal vector between this ball and the sibbling ball
-                    2. calculating unit tanget vector using unit normal vector
-                    3. evaluating scalar normal vectors and scalar tanget vectors for both this and sibbling ball
-                        this is done by dot product of unit vectors and velocity vector
-                    4. Using below formula below on normal scalar only. this is because when ball collides there is only change in normal not in tangent
-                        this conserves kinetic energy
-                    5. calculating new normal velocity vector and tangent velocity vector. by mul(unit vector, scalar values)
-                    6. Finally normal vector and tangent vector is added to get resultant velocity
-    
-    
-                     
-                    Using formula:
-                    v_final_a= ((ma-mb)/(ma+mb))*va + (2*mb/(ma+mb)*vb)
-    
-                    (ma-mb)/(ma+mb)==> cal_a
-                    2*mb/(ma+mb)==> cal_b
-    
-                    velocity in our case is in vector
-                    */
-                    //vector unit normal and tangent
-                    const unitNormal = this.unitVector(sibbling_ball);
-                    const unitTangent = [(-1) * unitNormal[1], unitNormal[0]];
-
-
-                    //Scalar normal and tangent Values [dot product] [0]=>velocity in x [1]=>velocity in y
-                    const thisScalarNormalVelocity = this.velocity[0] * unitNormal[0] + this.velocity[1] * unitNormal[1];
-                    const sibblScalarNormalVelocity = sibbling_ball.velocity[0] * unitNormal[0] + sibbling_ball.velocity[1] * unitNormal[1];
-                    const thisTangentVelocity = this.velocity[0] * unitTangent[0] + this.velocity[1] * unitTangent[1];
-                    const sibblingTangentVelocity = sibbling_ball.velocity[0] * unitTangent[0] + sibbling_ball.velocity[1] * unitTangent[1];
-
-                    let cal_a_temp = cal_a(this.w, sibbling_ball.w);// (ma-mb)/(ma+mb)
-                    let cal_b_temp = cal_b(this.w, sibbling_ball.w);// 2*mb/(ma+mb)
-
-                    const thisNormalVelocity = cal_a_temp * thisScalarNormalVelocity + cal_b_temp * sibblScalarNormalVelocity;
-
-                    cal_a_temp = cal_a(sibbling_ball.w, this.w);// (ma-mb)/(ma+mb)
-                    cal_b_temp = cal_b(sibbling_ball.w, this.w);// 2*mb/(ma+mb)
-
-                    const sibblingNormalVelocity = cal_b_temp * thisScalarNormalVelocity + cal_a_temp * sibblScalarNormalVelocity;
-
-                    const thisNormalVector = [
-                        thisNormalVelocity * unitNormal[0],
-                        thisNormalVelocity * unitNormal[1]
-                    ]
-                    const sibblingNormalVector = [
-                        sibblingNormalVelocity * unitNormal[0],
-                        sibblingNormalVelocity * unitNormal[1]
-                    ]
-                    const thisTangentVector = [
-                        thisTangentVelocity * unitTangent[0],
-                        thisTangentVelocity * unitTangent[1]
-                    ]
-                    const sibblingTangentVector = [
-                        sibblingTangentVelocity * unitTangent[0],
-                        sibblingTangentVelocity * unitTangent[1]
-                    ]
-                    sibbling_ball.velocity = [
-                        sibblingNormalVector[0] + sibblingTangentVector[0],
-                        sibblingNormalVector[1] + sibblingTangentVector[1]
-
-                    ]
-
-                    this.velocity = [
-
-                        thisNormalVector[0] + thisTangentVector[0],
-                        thisNormalVector[1] + thisTangentVector[1]
-                    ]
-
-
-                    const m_v = thisNormalVelocity; //my velocity
-                    const s_v = sibblingNormalVelocity; //sibbling ball velocity
-
-
-
-                    this.x = (sibbling_ball.x + ((this.x - sibbling_ball.x) / distance_btn) * (sibbling_ball.r + this.r));
-                    this.y = (sibbling_ball.y + ((this.y - sibbling_ball.y) / distance_btn) * (sibbling_ball.r + this.r));
-                }
-            }
-        );
-
-    }
-}
-
-//Div wapper
-
-const divWrapper = document.createElement('div');
-divWrapper.style.display="flex";
-divWrapper.style.justifyContent="space-between";
-divWrapper.style.flexDirection="column";
-document.body.appendChild(divWrapper);
-
-//Message2
-const msg2 = document.createElement('p');
-msg2.innerHTML = "Enter Number of Balls: (Press Enter to take effect)";
-msg2.style.fontWeight = 900;
-msg2.style.color="#FFF";
-msg2.style.fontSize = "1rem";
-divWrapper.appendChild(msg2);
 //input
 const inputSpace = document.createElement('input');
 inputSpace.type="number";
@@ -240,7 +66,13 @@ inputSpace.style.marginBottom="2rem"
 inputSpace.addEventListener('keypress',
     (e)=>{
         if (e.key === 'Enter' && inputSpace.value){
-            ball_count=inputSpace.value
+            if (inputSpace.value>1000){
+                window.alert("Ball count cannot have value more than 1000: Setting ball count to 1000");
+                ball_count=1000;
+            }
+            else{
+                ball_count=inputSpace.value
+            }
             initializeBall()
 
         }
@@ -249,83 +81,7 @@ inputSpace.addEventListener('keypress',
 );
 divWrapper.appendChild(inputSpace);
 
-//Message1
-const msg = document.createElement('p');
-msg.innerHTML = "Ball Collision using Canvas: DOM is used in other branch";
-msg.style.fontWeight = 900;
-msg.style.color="#FFF";
-msg.style.fontSize = "1.5rem";
-msg.style.padding='.8rem';
-msg.style.border='1px dashed #fff'
-divWrapper.appendChild(msg);
 
-
-//Creating ball
-
-//random position generator
-function getRandomInt(mini, maxi) {
-    const minCeiled = Math.ceil(mini + max_size);
-    const maxFloored = Math.floor(maxi - max_size);
-    return (Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled));
-}
-//function to ensure no ovelapping balls during spwan
-function nooverlap(ballArray) {
-    const overlap_detect = (x1, y1, r1, x2, y2, r2) => {
-        const x_diff = x1 - x2;
-        const y_diff = y1 - y2;
-        const distance_btn = Math.sqrt(x_diff * x_diff + y_diff * y_diff);
-        return (distance_btn <= (r1 + r2));
-    }
-    let r = max_size;
-
-    for (let j = 0; j < max_size; j++) {
-        r = getRandomInt(min_size, r);  //random radius
-        for (let k = 0; k < boundry_max_x; k++) {
-            const x = getRandomInt(boundry_min_x + r, boundry_max_x - r); //random position x
-            const y = getRandomInt(boundry_min_y + r, boundry_max_y - r);//random position y
-            const possile = ballArray.filter(
-                (ball) => {
-                    return !overlap_detect(x, y, r, ball.x, ball.y, ball.r);
-                }
-            );
-            if (possile.length == ballArray.length) {
-                return [x, y, r];
-            }
-        }
-        if (r <= min_size) return false;
-    }
-    return false;
-
-}
-
-
-//Initiallizing balls
-function initializeBall() {
-    ballInitialized=false;
-    ballArray.length = 0;
-    for (let i = 0; i < ball_count; i++) {
-        const xyr_holder = nooverlap(ballArray);
-        if (xyr_holder) {
-            const [x, y, r] = xyr_holder;
-            const v = [
-                getRandomInt(min_velocity, max_velocity)//random velocity
-                ,
-                getRandomInt(min_velocity, max_velocity)
-            ];
-            const c = `#${getRandomInt(100, 999)}`
-            const ball = new Ball(x, y, v, r, c);
-            ball.drawBall();
-            ballArray.push(ball);
-        }
-        else {
-            console.log('balls overlapping');
-        }
-
-    }
-    ballInitialized=true;
-
-    console.log('Balls Initialized')
-}
 initializeBall();
 
 function mainloop() {
