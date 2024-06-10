@@ -76,7 +76,7 @@ class Ball {
         this.x = x;
         this.y = y;
         this.r = r; //radius
-        this.w = r; //weight=radius
+        this.w = r*10; //weight=radius*10
         this.color = color;
         this.velocity = velocity;
     }
@@ -251,7 +251,7 @@ divWrapper.appendChild(inputSpace);
 
 //Message1
 const msg = document.createElement('p');
-msg.innerHTML = "Ball Collision using Canvas";
+msg.innerHTML = "Ball Collision using Canvas: DOM is used in other branch";
 msg.style.fontWeight = 900;
 msg.style.color="#FFF";
 msg.style.fontSize = "1.5rem";
@@ -264,8 +264,8 @@ divWrapper.appendChild(msg);
 
 //random position generator
 function getRandomInt(mini, maxi) {
-    const minCeiled = Math.ceil(mini + 5);
-    const maxFloored = Math.floor(maxi - 5);
+    const minCeiled = Math.ceil(mini + max_size);
+    const maxFloored = Math.floor(maxi - max_size);
     return (Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled));
 }
 //function to ensure no ovelapping balls during spwan
